@@ -19,8 +19,9 @@
       :themeList="themeList"
       :defaultTheme="defaultTheme"
       @setTheme="setTheme"
-      ref="menuBar"
-    ></menu-bar>
+      :bookAvailable="bookAvailable"
+      @onProgressChange="onProgressChange"
+      ref="menuBar"></menu-bar>
   </div>
 </template>
 
@@ -82,10 +83,18 @@ export default {
           }
         }
       ],
-      defaultTheme: 0
+      defaultTheme: 0,
+      // 图书是否可以阅读
+      bookAvailable: false
     }
   },
   methods: {
+    // progress 进度条的数值 (0-100)
+    onProgressChange(progress) {
+      const percentage = progress / 100
+      const location = percentage > 0 ? this.locations.cfiFromPercentage(percentage) : 0
+      this.rendition.display(location)
+    },
     setTheme(index) {
       this.themes.select(this.themeList[index].name)
       this.defaultTheme = index
@@ -120,6 +129,14 @@ export default {
       // this.themes.select(name)
       this.registerTheme()
       this.setTheme(this.defaultTheme)
+      // 获取locations对象
+      // 通过钩子函数来获取
+      this.book.ready.then(() => {
+        return this.book.locations.generate()
+      }).then(result => {
+        this.locations = this.book.locations
+        this.bookAvailable = true
+      })
     },
     prevPage() {
       // Rendtion.prev
@@ -161,15 +178,12 @@ export default {
         z-index: 100;
         .left {
           flex: 0 0 px2rem(100);
-
         }
         .center {
           flex: 1;
-
         }
         .right {
           flex: 0 0 px2rem(100);
-
         }
       }
     }
